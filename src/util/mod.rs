@@ -1,10 +1,12 @@
 use std::fmt;
-#[derive(Debug, Clone)]
+use std::fmt::Display;
+
+#[derive(Debug)]
 pub struct NmlError {
     error_type: ErrorKind,
 }
 
-impl fmt for NmlError {
+impl Display for NmlError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{:?}", self.error_type)
     }
@@ -17,7 +19,7 @@ pub enum ErrorKind {
     CreateMatrix
 }
 
-impl fmt::Display for ErrorKind {
+impl Display for ErrorKind {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             ErrorKind::InvalidCols => write!(f, "Invalid number of columns"),
