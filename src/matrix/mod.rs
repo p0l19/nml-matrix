@@ -3,27 +3,36 @@ use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
 
 
+/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensonal array using row-major-ordering
 pub struct NmlMatrix {
-    num_rows: u32,
-    num_cols: u32,
+    pub num_rows: u32,
+    pub num_cols: u32,
     //data is stored using row-major-ordering data[i][j] = data_new[i * m +j]
-    data: Vec<f64>,
-    is_square: bool,
+    pub data: Vec<f64>,
+    pub is_square: bool,
 }
 
 impl NmlMatrix {
 
     //creates a matrix with a given Array of numbers
-    pub fn new(num_rows: u32, num_cols: u32) -> Result<Self, NmlError> {
-        let valid = num_rows > 0 && num_cols > 0;
-        let valid = match valid {
-            false => NmlError::new(ErrorKind::InvalidRows),
+    pub fn new(num_rows: u32, num_cols: u32) -> Self {
+        let data: Vec<f64> = Vec::with_capacity((num_rows * num_cols) as usize);
+        Self {
+            num_rows,
+            num_cols,
+            data,
+            is_square: num_rows == num_cols,
+        }
+    }
+
+    pub fn new_with_data(num_rows: u32, num_cols: u32, data: Vec<f64>) -> Result<Self, NmlError> {
+        let valid = match data.len() == (num_cols * num_rows) as usize {
+            false => Err(()),
             true  => Ok(()),
         };
         match valid {
             Ok(()) => {
                 let is_square = num_rows == num_cols;
-                let data: Vec<f64> = Vec::with_capacity((num_rows*num_cols) as usize);
                 Ok(NmlMatrix {
                     num_rows,
                     num_cols,
@@ -31,9 +40,10 @@ impl NmlMatrix {
                     is_square,
                 })
             },
-            Err(ErrorKind::CreateMatrix) => NmlError::new(ErrorKind::CreateMatrix),
+            Err(()) => Err(NmlError::new(ErrorKind::CreateMatrix)),
         }
     }
+
 
     pub fn nml_mat_rnd(num_rows: u32, num_cols: u32, minimum: f64, maximum: f64) -> Self {
         let mut rng = rand::thread_rng();
@@ -56,6 +66,7 @@ impl NmlMatrix {
         }
     }
 
+    //creates a identity matrix with the given size
     pub fn nml_mat_eye(size: u32) -> Self {
         let mut data: Vec<f64> = vec![0.0; (size * size) as usize];
         for i in 0..size {
@@ -77,10 +88,10 @@ impl NmlMatrix {
             is_square: matrix.is_square,
         }
     }
-    /*
-    pub fn nml_mat_fromfile(path: Path) -> Self {
 
-    }*/
+    pub fn nml_mat_fromfile() -> Self {
+        unimplemented!("Not implemented yet")
+    }
 
     pub fn equality(self: &Self, matrix: NmlMatrix) -> bool {
         if self.num_rows != matrix.num_rows || self.num_cols != matrix.num_cols {
@@ -102,7 +113,7 @@ impl NmlMatrix {
         }
         for i in 0..self.num_rows {
             for j in 0..self.num_cols {
-                if (self.data[(i * self.num_cols + j) as usize] - matrix.data[(i * matrix.num_cols + j) as usize]).abs() > tolerance as f64 {
+                if (self.data[(i * self.num_cols + j) as usize] - matrix.data[(i * matrix.num_cols + j) as usize]).abs() > tolerance {
                     return false;
                 }
             }
@@ -115,10 +126,10 @@ impl NmlMatrix {
         // and then in the second match return either the Column/Matrix or the matrix-error
         let valid = match column < self.num_cols {
             true => Ok(()),
-            false => Err(ErrorKind::InvalidRows),
+            false => Err(()),
         };
         match valid {
-            Err(ErrorKind::InvalidRows)=> NmlError::new(ErrorKind::InvalidCols),
+            Err(())=> Err(NmlError::new(ErrorKind::InvalidCols)),
             Ok(()) => {
                 let mut data: Vec<f64> = Vec::with_capacity(self.num_rows as usize);
                 for i in 0..self.num_rows {
@@ -133,6 +144,8 @@ impl NmlMatrix {
             },
         }
     }
+
+
 }
 
 impl Display for NmlMatrix {

@@ -1,9 +1,17 @@
 use std::fmt;
 use std::fmt::Display;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct NmlError {
     error_type: ErrorKind,
+}
+
+impl NmlError {
+    pub fn new(error_type: ErrorKind) -> Self {
+        Self {
+            error_type,
+        }
+    }
 }
 
 impl Display for NmlError {
@@ -12,7 +20,7 @@ impl Display for NmlError {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum ErrorKind {
     InvalidRows,
     InvalidCols,
