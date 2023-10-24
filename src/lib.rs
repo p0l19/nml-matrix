@@ -2,7 +2,7 @@ mod matrix;
 mod util;
 use crate::matrix::NmlMatrix;
 
-
+///unit tests for the Methods and Constructors of the NmlMatrix struct
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -93,5 +93,13 @@ mod tests {
         let matrix = NmlMatrix::new_with_data(2, 2, data).expect("Unable to create matrix");
         let column = matrix.get_column(2);
         assert_eq!(column.is_err(), true);
+    }
+
+    #[test]
+    pub fn get_row_equality() {
+        let data: Vec<f64> = vec![1_f64,2_f64,3_f64, 4_f64];
+        let matrix = NmlMatrix::new_with_data(1, 4, data).expect("Unable to create matrix");
+        let row = matrix.get_row(0).expect("Unable to get row");
+        assert_eq!(matrix.equality(row), true);
     }
 }

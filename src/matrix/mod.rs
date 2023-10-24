@@ -3,7 +3,7 @@ use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
 
 
-/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensonal array using row-major-ordering
+/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering
 pub struct NmlMatrix {
     pub num_rows: u32,
     pub num_cols: u32,
@@ -26,22 +26,18 @@ impl NmlMatrix {
     }
 
     pub fn new_with_data(num_rows: u32, num_cols: u32, data: Vec<f64>) -> Result<Self, NmlError> {
-        let valid = match data.len() == (num_cols * num_rows) as usize {
-            false => Err(()),
-            true  => Ok(()),
-        };
-        match valid {
-            Ok(()) => {
+        match data.len() == (num_cols * num_rows) as usize {
+            false => Err(NmlError::new(ErrorKind::CreateMatrix)),
+            true  => {
                 let is_square = num_rows == num_cols;
                 Ok(NmlMatrix {
                     num_rows,
                     num_cols,
                     data,
                     is_square,
-                })
-            },
-            Err(()) => Err(NmlError::new(ErrorKind::CreateMatrix)),
+                })},
         }
+
     }
 
 
@@ -75,7 +71,7 @@ impl NmlMatrix {
         Self {
             num_rows: size,
             num_cols: size,
-            data: data,
+            data,
             is_square: true,
         }
     }
@@ -122,15 +118,9 @@ impl NmlMatrix {
     }
 
     pub fn get_column(self: &Self, column: u32) -> Result<Self, NmlError> {
-        // uses two match statements to first check if the given column number is valid
-        // and then in the second match return either the Column/Matrix or the matrix-error
-        let valid = match column < self.num_cols {
-            true => Ok(()),
-            false => Err(()),
-        };
-        match valid {
-            Err(())=> Err(NmlError::new(ErrorKind::InvalidCols)),
-            Ok(()) => {
+        match column < self.num_cols {
+            false => Err(NmlError::new(ErrorKind::InvalidCols)),
+            true => {
                 let mut data: Vec<f64> = Vec::with_capacity(self.num_rows as usize);
                 for i in 0..self.num_rows {
                     data.push(self.data[(i * self.num_rows + column) as usize]);
@@ -138,7 +128,7 @@ impl NmlMatrix {
                 Ok(Self {
                     num_cols: 1,
                     num_rows: self.num_rows,
-                    data: data,
+                    data,
                     is_square: false
                 })
             },
@@ -146,6 +136,56 @@ impl NmlMatrix {
     }
 
 
+    pub fn get_row(self: &Self, row: u32) -> Result<Self, NmlError> {
+        match row < self.num_rows {
+            true => {
+                let data: Vec<f64> = self.data[(row * self.num_cols) as usize..(row * self.num_cols + self.num_cols) as usize].to_vec().clone();
+                Ok(Self {
+                    num_cols: self.num_cols,
+                    num_rows: 1,
+                    data,
+                    is_square: false
+                })
+            },
+            false => Err(NmlError::new(ErrorKind::InvalidRows)),
+        }
+    }
+    /// Method sets the value of a given cell in the matrix through a mutable reference
+    pub fn set_value(self: &mut Self, row: u32, col: u32, data: f64) -> Result<(), NmlError> {
+        let valid_tuple: (bool, bool) = (row < self.num_rows, col < self.num_cols);
+        match valid_tuple {
+            (false, _) => Err(NmlError::new(ErrorKind::InvalidRows)),
+            (_, false) => Err(NmlError::new(ErrorKind::InvalidCols)),
+            (true, true) => {
+                self.data[(row * self.num_cols + col) as usize] = data;
+                Ok(())
+            },
+        }
+    }
+    /// Method sets the values of all cells ro a given value
+    pub fn set_all_values(self: &mut Self, value: f64) {
+        for i in 0..self.num_rows {
+            for j in 0..self.num_cols {
+                self.data[(i * self.num_cols + j) as usize] = value;
+            }
+        }
+    }
+    ///checks if the matrix is square and sets the diagonal values to a given value
+    pub fn set_dig_values(self: &mut Self, value: f64) -> Result<(), NmlError> {
+        if self.is_square == true {
+            for i in 0..self.num_rows {
+                self.data[(i * self.num_cols + i) as usize] = value;
+            }
+        }
+        match self.is_square {
+            true => Ok(()),
+            false => Err(NmlError::new(ErrorKind::MatrixNotSquare)),
+        }
+    }
+
+    pub fn multiply_row_scalar() {}
+
+    pub fn multiply_col_scalar() {}
 }
 
 impl Display for NmlMatrix {

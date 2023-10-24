@@ -24,7 +24,8 @@ impl Display for NmlError {
 pub enum ErrorKind {
     InvalidRows,
     InvalidCols,
-    CreateMatrix
+    CreateMatrix,
+    MatrixNotSquare
 }
 
 impl Display for ErrorKind {
@@ -33,6 +34,7 @@ impl Display for ErrorKind {
             ErrorKind::InvalidCols => write!(f, "Invalid number of columns"),
             ErrorKind::InvalidRows => write!(f, "Invalid number of rows"),
             ErrorKind::CreateMatrix => write!(f, "Unable to create matrix"),
+            ErrorKind::MatrixNotSquare => write!(f, "Matrix is not square"),
         }
     }
 }
