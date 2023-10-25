@@ -1,6 +1,8 @@
 use std::fmt::Display;
+use std::thread::sleep;
 use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
+use crate::util::ErrorKind::{InvalidCols, InvalidRows};
 
 
 /// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering
@@ -183,9 +185,73 @@ impl NmlMatrix {
         }
     }
 
-    pub fn multiply_row_scalar() {}
+    pub fn multiply_row_scalar(self: &mut Self, row: u32, scalar: f64) -> Result<(), NmlError>{
+        match row < self.num_rows {
+            false => Err(NmlError::new(ErrorKind::InvalidRows)),
+            true => {
+                for i in 0..self.num_cols {
+                    self.data[(row * self.num_cols + i) as usize] *= scalar;
+                }
+                Ok(())
+            },
+        }
+    }
 
-    pub fn multiply_col_scalar() {}
+    pub fn multiply_col_scalar(self: &mut Self, col: u32, scalar : u32) -> Result<(), NmlError>{
+        match col < self.num_cols {
+            false => Err(NmlError::new(ErrorKind::InvalidCols)),
+            true => {
+                for i in 0..self.num_rows {
+                    self.data[(i * self.num_cols + col) as usize] *= scalar as f64;
+
+                }
+                Ok(())
+            }
+        }
+    }
+
+    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) {
+        for i in 0..self.data.len()-1 {
+            self.data[i] *= scalar;
+        }
+    }
+
+    /// row_1 ist multiplied with scalar_1, this is analog for 2. row_1 will be modified with the solution (row_1 = row_1 * scalar + row_2 * scalar_2)
+    pub fn add_rows(self: &mut Self, row_1: u32, scalar_1: f64, row_2: u32, scalar_2: f64) -> Result<(), NmlError>{
+        match row_1 < self.num_rows && row_2 < self.num_rows {
+            false => Err(NmlError::new(InvalidRows)),
+            true => {
+                for i in 0..self.num_cols {
+                    let value = self.data[(row_1 * self.num_cols + i) as usize];
+                    self.data[(row_1 * self.num_cols + i) as usize] = value * scalar_1 + self.data[(row_2 * self.num_cols + i) as usize] * scalar_2;
+                }
+                Ok(())
+            }
+        }
+    }
+
+    pub fn remove_column(self: &Self, col: u32) -> Result<NmlMatrix, NmlError>{
+        match col < self.num_cols {
+            false => Err(NmlError::new(InvalidCols)),
+            true => {
+                let mut data: Vec<f64> = Vec::with_capacity((self.num_rows * 1) as usize);
+                for i in 0..self.data.len() -1 {
+                    if i % (self.num_cols -1) as usize == 0 {
+                        data.push(self.data[i]);
+                    }
+                }
+                Ok(
+                    Self {
+                        num_cols: 1,
+                        num_rows: self.num_rows,
+                        data,
+                        is_square: false
+                    }
+                )
+            }
+        }
+    }
+
 }
 
 impl Display for NmlMatrix {
