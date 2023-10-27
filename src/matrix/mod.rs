@@ -229,6 +229,18 @@ impl NmlMatrix {
             }
         }
     }
+    ///Swapps two given rows of a matrix object
+    pub fn swapping_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError>{
+        match row_1 < self.num_rows && row_2 < self.num_rows {
+            false => Err(NmlError::new(ErrorKind::InvalidRows)),
+            true => {
+                let row_difference: u32 = (row_2 as f32 - row_1 as f32).abs() as u32;    
+                let row_1: Vec<f64> = self.data[(row_1 * self.num_cols) as usize .. (row_1 * self.num_cols + self.num_cols) as usize].to_vec();
+                for i in 
+                Ok(())
+            }
+        }
+    }
 
     pub fn remove_column(self: &Self, col: u32) -> Result<NmlMatrix, NmlError>{
         match col < self.num_cols {
