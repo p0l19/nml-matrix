@@ -1,7 +1,11 @@
 [package]
 name = "nml-matrix"
+description = "A small library to work with matrices."
 version = "0.1.0"
+license = "BSD 3-Clause License"
 edition = "2021"
+repository = "https://github.com/p0l19/nml-matrix"
+
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
