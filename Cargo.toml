@@ -2,7 +2,7 @@
 name = "nml-matrix"
 description = "A small library to work with matrices."
 version = "0.1.1"
-license = "BSD 3-Clause License"
+license = "BSD 3-Clause"
 edition = "2021"
 repository = "https://github.com/p0l19/nml-matrix"
 
