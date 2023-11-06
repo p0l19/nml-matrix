@@ -229,7 +229,7 @@ impl NmlMatrix {
             }
         }
     }
-    ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError
+    ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
     pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError>{
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
@@ -238,6 +238,20 @@ impl NmlMatrix {
                     let temp = self.data[(row_1 * self.num_cols + i) as usize];
                     self.data[(row_1 * self.num_cols + i) as usize] = self.data[(row_2 * self.num_cols + i) as usize];
                     self.data[(row_2 * self.num_cols + i) as usize] = temp;
+                }
+                Ok(())
+            }
+        }
+    }
+    ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
+    pub fn swap_columns(self: &mut Self, col_1: u32, col_2: u32) -> Result<(), NmlError>{
+        match col_1 < self.num_cols && col_2 < self.num_cols {
+            false => Err(NmlError::new(InvalidCols)),
+            true => {
+                for i in 0..self.num_rows {
+                    let temp = self.data[(i*self.num_cols + col_1) as usize];
+                    self.data[(i*self.num_cols + col_1) as usize] = self.data[(i*self.num_cols + col_2) as usize];
+                    self.data[(i*self.num_cols + col_2) as usize] = temp;
                 }
                 Ok(())
             }
@@ -284,6 +298,9 @@ impl NmlMatrix {
         }
     }
 
+    pub fn concatenat_horizontal(number_matrix: u32, matrices: Vec<&Self>) -> Self{
+        match
+    }
 }
 
 impl Display for NmlMatrix {
@@ -299,10 +316,6 @@ impl Display for NmlMatrix {
         write!(f, "{}", output)
     }
 }
-
-
-
-
 
 impl Eq for NmlMatrix {}
 impl PartialEq for NmlMatrix {
