@@ -1,5 +1,5 @@
-mod matrix;
-mod util;
+pub mod matrix;
+pub mod util;
 use crate::matrix::NmlMatrix;
 
 ///unit tests for the Methods and Constructors of the NmlMatrix struct
