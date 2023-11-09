@@ -5,6 +5,8 @@ use crate::matrix::NmlMatrix;
 ///unit tests for the Methods and Constructors of the NmlMatrix struct
 #[cfg(test)]
 mod tests {
+    use std::result;
+
     use super::*;
 
     #[test]
@@ -229,7 +231,18 @@ mod tests {
         let mut matrix = NmlMatrix::new_with_data(2, 3, data).expect("Unable to create matrix");
         matrix.swap_rows(0, 1).expect("Invalid row");
         let expected_data: Vec<f64> = vec![4_f64,5_f64, 6_f64, 1_f64,2_f64,3_f64];
-        let expected = NmlMatrix::new_with_data(2, 3, expected_data).expect("Unable to create matrix");
+        let expected =    NmlMatrix::new_with_data(2, 3, expected_data).expect("Unable to create matrix");
         assert_eq!(matrix == expected, true);
+    }
+
+    #[test]
+    pub fn add_matrix() {
+        let data: Vec<f64> = vec![1_f64,2_f64,3_f64, 4_f64];
+        let matrix_1 = NmlMatrix::new_with_data(2, 2, data).expect("Unable to create matrix");
+        let matrix_2 = NmlMatrix::nml_mat_sqr(2);
+        let expected_matrix: NmlMatrix = NmlMatrix::nml_mat_cp(&matrix_1);
+        let result = matrix_1 + matrix_2;
+        let result_matrix = result.expect("Unable to add matrices");
+        assert_eq!(result_matrix == expected_matrix, true);
     }
 }
