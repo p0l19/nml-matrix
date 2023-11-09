@@ -1,7 +1,9 @@
 use std::fmt::Display;
+use std::ops::Add;
+use std::ptr::eq;
 use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
-use crate::util::ErrorKind::{InvalidCols, InvalidRows};
+use crate::util::ErrorKind::{CreateMatrix, InvalidCols, InvalidRows};
 
 
 /// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j])
@@ -298,8 +300,61 @@ impl NmlMatrix {
         }
     }
 
-    pub fn concatenat_horizontal(number_matrix: u32, matrices: Vec<&Self>) -> Self{
-        match
+    pub fn concatenat_horizontal(matrices: Vec<&Self>) -> Result<Self, NmlError>{
+        let mut equal = true;
+        let mut num_cols: u32 = 0;
+        let mut whole_length: u32 = 0;
+        for i in 0..matrices.len() - 1 {
+            if matrices[i].num_rows != matrices[i+1].num_rows {
+                equal = false;
+                break;
+            }
+            num_cols += matrices[i].num_cols;
+            whole_length += matrices[i].num_rows * matrices[i].num_cols;
+        }
+        match equal {
+            false => Err(NmlError::new(InvalidRows)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..whole_length {
+
+                }
+                Ok(Self{
+                    num_cols,
+                    num_rows: matrices[1].num_rows,
+                    data,
+                    is_square: num_cols == matrices[1].num_rows
+                })
+            },
+        }
+    }
+
+    pub fn concatenat_vertical(matrices: Vec<&mut Self>) -> Result<Self, NmlError> {
+        let mut equal: bool = true;
+        let mut num_rows: u32= 0;
+        let num_cols = matrices[1].num_cols;
+        for i in 0..matrices.len() -1 {
+            if matrices[i].num_cols != matrices[i + 1].num_cols {
+                equal = false;
+                break;
+            }
+        }
+        match equal {
+            false => Err(NmlError::new(InvalidCols)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for matrix in matrices {
+                    let mut matrix_data = matrix.data.clone();
+                    data.append(&mut matrix_data);
+                }
+                Ok(Self{
+                    num_rows,
+                    num_cols,
+                    data,
+                    is_square: num_rows == num_cols,
+                })
+            }
+        }
     }
 }
 
@@ -321,5 +376,27 @@ impl Eq for NmlMatrix {}
 impl PartialEq for NmlMatrix {
     fn eq(&self, other: &Self) -> bool {
         self.equality(other)
+    }
+}
+
+impl Add for NmlMatrix {
+    type Output = Result<Self, NmlError>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+         match self.data.len() == rhs.data.len() && self.num_cols == rhs.num_cols{
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::with_capacity(self.data.len());
+                for i in 0..self.data.len() -1 {
+                    data[i] = self.data[i] + rhs.data[i];
+                }
+                Ok(Self{
+                    num_cols: self.num_cols,
+                    num_rows: self.num_rows,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
     }
 }
