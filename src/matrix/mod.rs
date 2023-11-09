@@ -383,13 +383,11 @@ impl Add for NmlMatrix {
     type Output = Result<Self, NmlError>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        println!("{} {}", self.data.len(), rhs.data.len());
         match self.data.len() == rhs.data.len() && self.num_cols == rhs.num_cols{
             false => Err(NmlError::new(CreateMatrix)),
             true => {
                 let mut data: Vec<f64> = Vec::new();
                 for i in 0..self.data.len() {
-                    print!("{} ", i);
                     data.insert(i, self.data[i] + rhs.data[i]);
                 }
                 Ok(Self{
