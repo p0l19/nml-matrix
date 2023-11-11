@@ -300,62 +300,6 @@ impl NmlMatrix {
         }
     }
 
-    pub fn concatenat_horizontal(matrices: Vec<&Self>) -> Result<Self, NmlError>{
-        let mut equal = true;
-        let mut num_cols: u32 = 0;
-        let mut whole_length: u32 = 0;
-        for i in 0..matrices.len() - 1 {
-            if matrices[i].num_rows != matrices[i+1].num_rows {
-                equal = false;
-                break;
-            }
-            num_cols += matrices[i].num_cols;
-            whole_length += matrices[i].num_rows * matrices[i].num_cols;
-        }
-        match equal {
-            false => Err(NmlError::new(InvalidRows)),
-            true => {
-                let mut data: Vec<f64> = Vec::new();
-                for i in 0..whole_length {
-
-                }
-                Ok(Self{
-                    num_cols,
-                    num_rows: matrices[1].num_rows,
-                    data,
-                    is_square: num_cols == matrices[1].num_rows
-                })
-            },
-        }
-    }
-
-    pub fn concatenat_vertical(matrices: Vec<&mut Self>) -> Result<Self, NmlError> {
-        let mut equal: bool = true;
-        let mut num_rows: u32= 0;
-        let num_cols = matrices[1].num_cols;
-        for i in 0..matrices.len() -1 {
-            if matrices[i].num_cols != matrices[i + 1].num_cols {
-                equal = false;
-                break;
-            }
-        }
-        match equal {
-            false => Err(NmlError::new(InvalidCols)),
-            true => {
-                let mut data: Vec<f64> = Vec::new();
-                for matrix in matrices {
-                    let mut matrix_data = matrix.data.clone();
-                    data.append(&mut matrix_data);
-                }
-                Ok(Self{
-                    num_rows,
-                    num_cols,
-                    data,
-                    is_square: num_rows == num_cols,
-                })
-            }
-        }
-    }
 }
 
 impl Display for NmlMatrix {
