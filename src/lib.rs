@@ -245,4 +245,15 @@ mod tests {
         let result_matrix = result.expect("Unable to add matrices");
         assert_eq!(result_matrix == expected_matrix, true);
     }
+
+    #[test]
+    pub fn mul_matrix() {
+        let data: Vec<f64> = vec![1_f64,2_f64,3_f64, 4_f64];
+        let matrix_1 = NmlMatrix::new_with_data(2, 2, data).expect("Unable to create matrix");
+        let matrix_2 = NmlMatrix::nml_mat_eye(2);
+        let matrix_3 = NmlMatrix::nml_mat_cp(&matrix_1);
+        let result = matrix_1.matrix_mul(&matrix_2).expect("Unable to multiply matrices");
+        println!("{}", result);
+        assert_eq!(result == matrix_3, true);
+    }
 }
