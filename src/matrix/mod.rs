@@ -1,6 +1,5 @@
 use std::fmt::Display;
-use std::ops::Add;
-use std::ptr::eq;
+use std::ops::{Add, Mul, Sub};
 use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
 use crate::util::ErrorKind::{CreateMatrix, InvalidCols, InvalidRows};
@@ -120,6 +119,13 @@ impl NmlMatrix {
         }
         true
     }
+
+    pub fn get_value(self: &Self, row: i32, col: i32) -> Result<f64, NmlError>{
+        match row < self.num_rows as i32 && col < self.num_cols as i32 {
+            false => Err(NmlError::new(InvalidRows)),
+            true => Ok(self.data[(row * self.num_cols as i32 + col) as usize]),
+        }
+    }
     ///Returns a result with a specified Column of a matrix, which in itself also is a matrix. If the specified matrix is not in the matrix the result will contain an error
     pub fn get_column(self: &Self, column: u32) -> Result<Self, NmlError> {
         match column < self.num_cols {
@@ -167,7 +173,7 @@ impl NmlMatrix {
         }
     }
     /// Method sets the values of all cells ro a given value
-    pub fn set_all_values(self: &mut Self, value: f64) {
+    pub fn  set_all_values(self: &mut Self, value: f64) {
         for i in 0..self.num_rows {
             for j in 0..self.num_cols {
                 self.data[(i * self.num_cols + j) as usize] = value;
@@ -212,9 +218,16 @@ impl NmlMatrix {
         }
     }
     ///multiplies the matrix in place with a given scalar
-    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) {
+    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) -> Self{
+        let mut data: Vec<f64> = Vec::new();
         for i in 0..self.data.len() {
-            self.data[i] *= scalar;
+            data.push(self.data[i] * scalar);
+        }
+        Self {
+            num_rows: self.num_rows,
+            num_cols: self.num_cols,
+            data,
+            is_square: self.is_square,
         }
     }
 
@@ -300,6 +313,51 @@ impl NmlMatrix {
         }
     }
 
+    pub fn matrix_mul(self: &Self, other: &Self) -> Result<Self, NmlError> {
+        match self.num_cols == other.num_rows {
+            false => Err(NmlError::new(InvalidCols)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.num_rows{
+                    for j in 0.. other.num_cols{
+                        data.insert((i*other.num_cols +j)as usize, 0.0);
+                        for k in 0..self.num_cols{
+                            data[(i*other.num_cols +j) as usize] += self.data[(i*self.num_cols +k) as usize] * other.data[(k*other.num_cols + j) as usize];
+                        }
+                    }
+                }
+                Ok(Self{
+                    num_rows: self.num_rows,
+                    num_cols: other.num_cols,
+                    data,
+                    is_square: self.num_rows == other.num_cols
+
+                })
+            }
+        }
+    }
+}
+
+impl Sub for NmlMatrix{
+    type Output = Result<Self, NmlError>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols {
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() -1 {
+                    data.push(self.data[i] - rhs.data[i]);
+                }
+                Ok(Self{
+                    num_rows: self.num_rows,
+                    num_cols: self.num_cols,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
 }
 
 impl Display for NmlMatrix {
@@ -327,12 +385,12 @@ impl Add for NmlMatrix {
     type Output = Result<Self, NmlError>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match self.data.len() == rhs.data.len() && self.num_cols == rhs.num_cols{
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols{
             false => Err(NmlError::new(CreateMatrix)),
             true => {
                 let mut data: Vec<f64> = Vec::new();
                 for i in 0..self.data.len() {
-                    data.insert(i, self.data[i] + rhs.data[i]);
+                    data.push(self.data[i] + rhs.data[i]);
                 }
                 Ok(Self{
                     num_cols: self.num_cols,
@@ -344,3 +402,13 @@ impl Add for NmlMatrix {
         }
     }
 }
+
+/*impl Mul for NmlMatrix {
+    type Output = Self;
+
+    fn mul(self, rhs: f64) -> Self::Output {
+        self.multiply_matrix_scalar(rhs)
+    }
+
+}*/
+
