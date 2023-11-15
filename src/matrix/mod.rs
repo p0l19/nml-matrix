@@ -27,6 +27,10 @@ impl NmlMatrix {
         }
     }
 
+    pub fn new_with_2d_vec() -> Result<Self, NmlError>{
+                todo!("Not implemented yet");
+    }
+
     ///Constructor that uses a vector to initialize the matrix. checks if the entered rows and columns fit the vector size
     pub fn new_with_data(num_rows: u32, num_cols: u32, data: Vec<f64>) -> Result<Self, NmlError> {
         match (num_rows * num_cols) as usize == data.len()  {
@@ -403,12 +407,13 @@ impl Add for NmlMatrix {
     }
 }
 
-/*impl Mul for NmlMatrix {
+impl Mul for NmlMatrix {
     type Output = Self;
 
-    fn mul(self, rhs: f64) -> Self::Output {
-        self.multiply_matrix_scalar(rhs)
+    fn mul(self, rhs: Self) -> Self::Output {
+        //strassen algorithm should be used
+        todo!("Not implemented yet");
     }
 
-}*/
+}
 
