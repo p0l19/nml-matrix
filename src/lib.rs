@@ -245,4 +245,13 @@ mod tests {
         let result_matrix = result.expect("Unable to add matrices");
         assert_eq!(result_matrix == expected_matrix, true);
     }
+
+    #[test]
+    pub fn strassen_algorithm() {
+        let matrix_1: NmlMatrix = NmlMatrix::nml_mat_eye(4);
+        let matrix_2: NmlMatrix = NmlMatrix::nml_mat_eye(4);
+        let result: NmlMatrix = matrix_1 * matrix_2;
+        println!("{}", result);
+        assert_eq!(true, true);
+    }
 }

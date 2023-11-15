@@ -15,7 +15,6 @@ pub struct NmlMatrix {
 }
 
 impl NmlMatrix {
-
     ///creates a matrix without data and reserves the capacity for the Data Vector
     pub fn new(num_rows: u32, num_cols: u32) -> Self {
         let data: Vec<f64> = Vec::with_capacity((num_rows * num_cols) as usize);
@@ -27,24 +26,24 @@ impl NmlMatrix {
         }
     }
 
-    pub fn new_with_2d_vec() -> Result<Self, NmlError>{
-                todo!("Not implemented yet");
+    pub fn new_with_2d_vec() -> Result<Self, NmlError> {
+        todo!("Not implemented yet");
     }
 
     ///Constructor that uses a vector to initialize the matrix. checks if the entered rows and columns fit the vector size
     pub fn new_with_data(num_rows: u32, num_cols: u32, data: Vec<f64>) -> Result<Self, NmlError> {
-        match (num_rows * num_cols) as usize == data.len()  {
+        match (num_rows * num_cols) as usize == data.len() {
             false => Err(NmlError::new(ErrorKind::CreateMatrix)),
-            true  => {
+            true => {
                 let is_square = num_rows == num_cols;
                 Ok(NmlMatrix {
                     num_rows,
                     num_cols,
                     data,
                     is_square,
-                })},
+                })
+            },
         }
-
     }
 
     ///Returns a matrix with defined size and random data between minimum and maximum values
@@ -124,7 +123,7 @@ impl NmlMatrix {
         true
     }
 
-    pub fn get_value(self: &Self, row: i32, col: i32) -> Result<f64, NmlError>{
+    pub fn get_value(self: &Self, row: i32, col: i32) -> Result<f64, NmlError> {
         match row < self.num_rows as i32 && col < self.num_cols as i32 {
             false => Err(NmlError::new(InvalidRows)),
             true => Ok(self.data[(row * self.num_cols as i32 + col) as usize]),
@@ -177,7 +176,7 @@ impl NmlMatrix {
         }
     }
     /// Method sets the values of all cells ro a given value
-    pub fn  set_all_values(self: &mut Self, value: f64) {
+    pub fn set_all_values(self: &mut Self, value: f64) {
         for i in 0..self.num_rows {
             for j in 0..self.num_cols {
                 self.data[(i * self.num_cols + j) as usize] = value;
@@ -209,20 +208,19 @@ impl NmlMatrix {
         }
     }
     ///multiplies a given column with a given scalar in place. If the row-index is not in the matrix the returned Result will contain an error
-    pub fn multiply_col_scalar(self: &mut Self, col: u32, scalar : f64) -> Result<(), NmlError>{
+    pub fn multiply_col_scalar(self: &mut Self, col: u32, scalar: f64) -> Result<(), NmlError> {
         match col < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
                 for i in 0..self.num_rows {
                     self.data[(i * self.num_cols + col) as usize] *= scalar;
-
                 }
                 Ok(())
             }
         }
     }
     ///multiplies the matrix in place with a given scalar
-    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) -> Self{
+    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) -> Self {
         let mut data: Vec<f64> = Vec::new();
         for i in 0..self.data.len() {
             data.push(self.data[i] * scalar);
@@ -236,7 +234,7 @@ impl NmlMatrix {
     }
 
     /// row_1 ist multiplied with scalar_1, this is analog for 2. row_1 will be modified with the solution (row_1 = row_1 * scalar + row_2 * scalar_2)
-    pub fn add_rows(self: &mut Self, row_1: u32, scalar_1: f64, row_2: u32, scalar_2: f64) -> Result<(), NmlError>{
+    pub fn add_rows(self: &mut Self, row_1: u32, scalar_1: f64, row_2: u32, scalar_2: f64) -> Result<(), NmlError> {
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
@@ -249,7 +247,7 @@ impl NmlMatrix {
         }
     }
     ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
-    pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError>{
+    pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError> {
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
@@ -263,14 +261,14 @@ impl NmlMatrix {
         }
     }
     ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
-    pub fn swap_columns(self: &mut Self, col_1: u32, col_2: u32) -> Result<(), NmlError>{
+    pub fn swap_columns(self: &mut Self, col_1: u32, col_2: u32) -> Result<(), NmlError> {
         match col_1 < self.num_cols && col_2 < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
                 for i in 0..self.num_rows {
-                    let temp = self.data[(i*self.num_cols + col_1) as usize];
-                    self.data[(i*self.num_cols + col_1) as usize] = self.data[(i*self.num_cols + col_2) as usize];
-                    self.data[(i*self.num_cols + col_2) as usize] = temp;
+                    let temp = self.data[(i * self.num_cols + col_1) as usize];
+                    self.data[(i * self.num_cols + col_1) as usize] = self.data[(i * self.num_cols + col_2) as usize];
+                    self.data[(i * self.num_cols + col_2) as usize] = temp;
                 }
                 Ok(())
             }
@@ -278,7 +276,7 @@ impl NmlMatrix {
     }
     ///Tries to remove a column of a matrix and returns the rest of the matrix as a now on. Does not move the original matrix.
     ///If the column is not in the original matrix the result will return an error
-    pub fn remove_column(self: &Self, col: u32) -> Result<Self, NmlError>{
+    pub fn remove_column(self: &Self, col: u32) -> Result<Self, NmlError> {
         match col < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
@@ -302,14 +300,34 @@ impl NmlMatrix {
     }
     ///Tries to remove a column of a matrix and returns the rest of the matrix as a now on. Does not move the original matrix.
     ///If the column is not in the original matrix the result will return an error
-    pub fn remove_row(self: &Self, row: u32) -> Result<Self, NmlError>{
+    pub fn remove_row(self: &Self, row: u32) -> Result<Self, NmlError> {
         match row < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
-                let data: Vec<f64> = self.data[((row +1) * self.num_cols) as usize ..self.data.len()].to_vec();
-                Ok(Self{
+                let data: Vec<f64> = self.data[((row + 1) * self.num_cols) as usize..self.data.len()].to_vec();
+                Ok(Self {
                     num_cols: self.num_cols,
                     num_rows: 1,
+                    data,
+                    is_square: false,
+                })
+            }
+        }
+    }
+
+    pub fn get_sub_mtr(self: &Self, row_start: u32, row_end: u32, col_start: u32, col_end: u32) -> Result<Self, NmlError> {
+        match row_start < self.num_rows && row_end < self.num_rows && col_start < self.num_cols && col_end < self.num_cols {
+            false => Err(NmlError::new(InvalidRows)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in row_start - 1..row_end {
+                    for j in col_start - 1..col_end {
+                        data.push(self.data[(i * self.num_cols + j) as usize]);
+                    }
+                }
+                Ok(Self {
+                    num_rows: row_end - row_start,
+                    num_cols: col_end - col_start,
                     data,
                     is_square: false,
                 })
@@ -322,26 +340,81 @@ impl NmlMatrix {
             false => Err(NmlError::new(InvalidCols)),
             true => {
                 let mut data: Vec<f64> = Vec::new();
-                for i in 0..self.num_rows{
-                    for j in 0.. other.num_cols{
-                        data.insert((i*other.num_cols +j)as usize, 0.0);
-                        for k in 0..self.num_cols{
-                            data[(i*other.num_cols +j) as usize] += self.data[(i*self.num_cols +k) as usize] * other.data[(k*other.num_cols + j) as usize];
+                for i in 0..self.num_rows {
+                    for j in 0..other.num_cols {
+                        data.insert((i * other.num_cols + j) as usize, 0.0);
+                        for k in 0..self.num_cols {
+                            data[(i * other.num_cols + j) as usize] += self.data[(i * self.num_cols + k) as usize] * other.data[(k * other.num_cols + j) as usize];
                         }
                     }
                 }
-                Ok(Self{
+                Ok(Self {
                     num_rows: self.num_rows,
                     num_cols: other.num_cols,
                     data,
                     is_square: self.num_rows == other.num_cols
-
                 })
             }
         }
     }
-}
+    /// The method expects that only two square matrices of the same size are entered. Where n is a power of 2. Therefore the method is private and should only be called from the mul-trait
+    fn strassen_algorithm(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> Self {
+        let dimensions: u32 = matrix_1.num_rows;
+        if dimensions <= 2 {
+            let m_1: f64 = (matrix_1.data[0] + matrix_1.data[3]) * (matrix_2.data[0] + matrix_2.data[3]);
+            let m_2: f64 = (matrix_1.data[2] + matrix_1.data[3]) * matrix_2.data[0];
+            let m_3: f64 = matrix_1.data[0] * (matrix_2.data[1] - matrix_2.data[3]);
+            let m_4: f64 = matrix_1.data[3] * (matrix_2.data[2] - matrix_2.data[0]);
+            let m_5: f64 = (matrix_1.data[0] + matrix_1.data[1]) * matrix_2.data[3];
+            let m_6: f64 = (matrix_1.data[2] - matrix_1.data[0]) * (matrix_2.data[0] + matrix_2.data[1]);
+            let m_7: f64 = (matrix_1.data[1] - matrix_1.data[3]) * (matrix_2.data[2] + matrix_2.data[3]);
+            let data: Vec<f64> = vec![m_1 + m_4 - m_5 + m_7, m_3 + m_5, m_2 + m_4, m_1 - m_2 + m_3 + m_6];
+            Self {
+                num_rows: dimensions,
+                num_cols: dimensions,
+                data,
+                is_square: true,
+            }
+        }
+        else {
+            let a_11: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
+            let a_12: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+            let a_21: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
+            let a_22: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+            let b_11: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
+            let b_12: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+            let b_21: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
+            let b_22: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+            let m_1: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_22).expect(""), &(&b_11 + &b_22).expect(""));
+            let m_2: NmlMatrix = Self::strassen_algorithm(&(&a_21 + &a_22).expect(""), &b_11);
+            let m_3: NmlMatrix = Self::strassen_algorithm(&a_11, &(&b_12 - &b_22).expect(""));
+            let m_4: NmlMatrix = Self::strassen_algorithm(&a_22, &(&b_21 - &b_11).expect(""));
+            let m_5: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_12).expect(""), &b_22);
+            let m_6: NmlMatrix = Self::strassen_algorithm(&(&a_21 - &a_11).expect(""), &(&b_11 + &b_12).expect(""));
+            let m_7: NmlMatrix = Self::strassen_algorithm(&(&a_12 - &a_22).expect(""), &(&b_21 + &b_22).expect(""));
+            let mut c_11: NmlMatrix = ((&m_1 + &m_4).expect("") - (&m_5 + &m_7).expect("")).expect("");
+            let mut c_12: NmlMatrix = (&m_3 + &m_5).expect("");
+            let mut c_21: NmlMatrix = (&m_2 + &m_4).expect("");
+            let mut c_22: NmlMatrix = ((&m_1 - &m_2).expect("") + (m_3 + m_6).expect("")).expect("");
+            let mut data: Vec<f64> = Vec::new();
+            data.append(&mut c_11.data[0usize..(dimensions / 2) as usize].to_vec());
+            data.append(&mut c_12.data[0usize..(dimensions / 2) as usize].to_vec());
+            data.append(&mut c_11.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
+            data.append(&mut c_12.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
+            data.append(&mut c_21.data[0usize..(dimensions / 2) as usize].to_vec());
+            data.append(&mut c_22.data[0usize..(dimensions / 2) as usize].to_vec());
+            data.append(&mut c_21.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
+            data.append(&mut c_22.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
 
+            Self {
+                num_rows: dimensions,
+                num_cols: dimensions,
+                data,
+                is_square: true,
+            }
+        }
+    }
+}
 impl Sub for NmlMatrix{
     type Output = Result<Self, NmlError>;
 
@@ -354,6 +427,28 @@ impl Sub for NmlMatrix{
                     data.push(self.data[i] - rhs.data[i]);
                 }
                 Ok(Self{
+                    num_rows: self.num_rows,
+                    num_cols: self.num_cols,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
+}
+
+impl Sub for &NmlMatrix {
+    type Output = Result<NmlMatrix, NmlError>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols {
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() -1 {
+                    data.push(self.data[i] - rhs.data[i]);
+                }
+                Ok(NmlMatrix{
                     num_rows: self.num_rows,
                     num_cols: self.num_cols,
                     data,
@@ -407,13 +502,45 @@ impl Add for NmlMatrix {
     }
 }
 
+impl Add for &NmlMatrix {
+    type Output = Result<NmlMatrix, NmlError>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols{
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() {
+                    data.push(self.data[i] + rhs.data[i]);
+                }
+                Ok(NmlMatrix{
+                    num_cols: self.num_cols,
+                    num_rows: self.num_rows,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
+}
+
 impl Mul for NmlMatrix {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        //strassen algorithm should be used
-        todo!("Not implemented yet");
-    }
+        return Self::strassen_algorithm(&self, &rhs);
 
+        /*
+        divide and conquer with strassens algorithm
+        1. Check if the matrices are square (nxn) and a if n is a power of 2
+        2. if not, add rows and columns with zeros to the matrix until it is
+        Steps 1 and 2 will be computed here, strassens algorithm will be its own method
+        3. Check if n <= 2 if yes, calculate the product
+            2.1 calculate the 7 products
+            2.2 calculate the 4 sums
+        3. if n > 2 divide the matrix into 4 submatrices call the Method recursively
+        4. return the matrix
+        */
+    }
 }
 
