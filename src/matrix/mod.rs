@@ -26,7 +26,7 @@ impl NmlMatrix {
         }
     }
 
-    pub fn new_with_2d_vec() -> Result<Self, NmlError> {
+    pub fn new_with_2d_vec(num_rows: u32, num_cols: u32, data: Vec<Vec<f64>>) -> Result<Self, NmlError> {
         todo!("Not implemented yet");
     }
 
@@ -334,8 +334,22 @@ impl NmlMatrix {
             }
         }
     }
+    pub fn transpose(self: &Self) -> Self{
+        let mut data: Vec<f64> = Vec::with_capacity(self.data.len());
+        for i in 0..self.num_cols {
+            for j in 0..self.num_rows {
+                data.push(self.data[(i + j*self.num_cols) as usize]);
+            }
+        }
+        Self {
+            num_rows: self.num_cols,
+            num_cols: self.num_rows,
+            data,
+            is_square: self.is_square,
+        }
+    }
 
-    pub fn matrix_mul(self: &Self, other: &Self) -> Result<Self, NmlError> {
+    pub fn mul_transpose(self: &Self, other: &Self) -> Result<Self, NmlError> {
         match self.num_cols == other.num_rows {
             false => Err(NmlError::new(InvalidCols)),
             true => {
@@ -357,6 +371,8 @@ impl NmlMatrix {
             }
         }
     }
+
+
     /// The method expects that only two square matrices of the same size are entered. Where n is a power of 2. Therefore the method is private and should only be called from the mul-trait
     fn strassen_algorithm(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> Self {
         let dimensions: u32 = matrix_1.num_rows;
