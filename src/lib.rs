@@ -247,11 +247,30 @@ mod tests {
     }
 
     #[test]
+    pub fn mul_naive() {
+        let data_1: Vec<f64> = vec![1.0, 0.0, 0.0, 1.0];
+        let data_2: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+        let matrix_1 = NmlMatrix::new_with_data(2,2, data_1).expect("");
+        let matrix_2 = NmlMatrix::new_with_data(2,2, data_2).expect("");
+        let result = matrix_2.mul_naive(&matrix_1).expect("");
+        let expect = NmlMatrix::nml_mat_cp(&matrix_2);
+        assert_eq!(result == expect, true);
+    }
+
+    /*#[test]
     pub fn strassen_algorithm() {
         let matrix_1: NmlMatrix = NmlMatrix::nml_mat_eye(4);
         let matrix_2: NmlMatrix = NmlMatrix::nml_mat_eye(4);
         let result: NmlMatrix = matrix_1 * matrix_2;
         println!("{}", result);
         assert_eq!(true, true);
+    }*/
+
+    #[test]
+    pub fn transpose() {
+        let matrix_1: NmlMatrix = NmlMatrix::new_with_data(3,3, vec![1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]).expect("matrix not created");
+        let matrix_2: NmlMatrix = matrix_1.transpose();
+        assert_eq!(matrix_1 == matrix_2, true);
     }
+
 }

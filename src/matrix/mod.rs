@@ -334,6 +334,8 @@ impl NmlMatrix {
             }
         }
     }
+
+    ///Computes the transpose matrix b' of a matrix b. This is achieved by going from row-major-ordering to a more efficient storage. The input matrix will not be modified or moved.
     pub fn transpose(self: &Self) -> Self{
         let mut data: Vec<f64> = Vec::with_capacity(self.data.len());
         for i in 0..self.num_cols {
@@ -353,20 +355,43 @@ impl NmlMatrix {
         match self.num_cols == other.num_rows {
             false => Err(NmlError::new(InvalidCols)),
             true => {
+                let m: u32 = self.num_rows;
+                let n: u32 = self.num_cols;
+                let transpose: NmlMatrix = other.transpose();
                 let mut data: Vec<f64> = Vec::new();
-                for i in 0..self.num_rows {
-                    for j in 0..other.num_cols {
-                        data.insert((i * other.num_cols + j) as usize, 0.0);
-                        for k in 0..self.num_cols {
-                            data[(i * other.num_cols + j) as usize] += self.data[(i * self.num_cols + k) as usize] * other.data[(k * other.num_cols + j) as usize];
-                        }
-                    }
-                }
-                Ok(Self {
+
+                Ok(Self{
                     num_rows: self.num_rows,
                     num_cols: other.num_cols,
                     data,
                     is_square: self.num_rows == other.num_cols
+                })
+            }
+        }
+    }
+    ///The naive matrix multiplication algorithm. It iterates trough all values of both matrices. These matrices are not moved or modified
+    pub fn mul_naive(self: &Self, other: &Self) -> Result<Self,NmlError> {
+        let m = self.num_rows;
+        let n_1 = self.num_cols;
+        let n_2 = other.num_rows;
+        let p = other.num_cols;
+        match n_1 == n_2 {
+            false => {Err(NmlError::new(CreateMatrix))},
+            true => {
+                let mut data = Vec::with_capacity((m*p) as usize);
+                for i in 0..m {
+                    for j in 0..p {
+                        data.insert((i * p + j) as usize, 0.0);
+                        for k in 0..n_1 {
+                            data[(i*p+j) as usize] += self.data[(i * n_1 + k) as usize] * other.data[(p * k + j) as usize];
+                        }
+                    }
+                }
+                Ok(Self{
+                    num_rows: m,
+                    num_cols: p,
+                    data,
+                    is_square: m == p,
                 })
             }
         }
@@ -377,30 +402,20 @@ impl NmlMatrix {
     fn strassen_algorithm(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> Self {
         let dimensions: u32 = matrix_1.num_rows;
         if dimensions <= 2 {
-            let m_1: f64 = (matrix_1.data[0] + matrix_1.data[3]) * (matrix_2.data[0] + matrix_2.data[3]);
-            let m_2: f64 = (matrix_1.data[2] + matrix_1.data[3]) * matrix_2.data[0];
-            let m_3: f64 = matrix_1.data[0] * (matrix_2.data[1] - matrix_2.data[3]);
-            let m_4: f64 = matrix_1.data[3] * (matrix_2.data[2] - matrix_2.data[0]);
-            let m_5: f64 = (matrix_1.data[0] + matrix_1.data[1]) * matrix_2.data[3];
-            let m_6: f64 = (matrix_1.data[2] - matrix_1.data[0]) * (matrix_2.data[0] + matrix_2.data[1]);
-            let m_7: f64 = (matrix_1.data[1] - matrix_1.data[3]) * (matrix_2.data[2] + matrix_2.data[3]);
-            let data: Vec<f64> = vec![m_1 + m_4 - m_5 + m_7, m_3 + m_5, m_2 + m_4, m_1 - m_2 + m_3 + m_6];
-            Self {
-                num_rows: dimensions,
-                num_cols: dimensions,
-                data,
-                is_square: true,
-            }
+            return matrix_1.mul_naive(&matrix_2).expect("Matrix size does not match");
         }
         else {
+            //get the four sub matrices of the original matrix that constitute each quadrant.
             let a_11: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
             let a_12: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
             let a_21: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
             let a_22: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+
             let b_11: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
             let b_12: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
             let b_21: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
             let b_22: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
+            //Compute the intermediate matrices m1 - m7. Uses only 7 matrix multipliations
             let m_1: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_22).expect(""), &(&b_11 + &b_22).expect(""));
             let m_2: NmlMatrix = Self::strassen_algorithm(&(&a_21 + &a_22).expect(""), &b_11);
             let m_3: NmlMatrix = Self::strassen_algorithm(&a_11, &(&b_12 - &b_22).expect(""));
@@ -408,10 +423,12 @@ impl NmlMatrix {
             let m_5: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_12).expect(""), &b_22);
             let m_6: NmlMatrix = Self::strassen_algorithm(&(&a_21 - &a_11).expect(""), &(&b_11 + &b_12).expect(""));
             let m_7: NmlMatrix = Self::strassen_algorithm(&(&a_12 - &a_22).expect(""), &(&b_21 + &b_22).expect(""));
-            let mut c_11: NmlMatrix = ((&m_1 + &m_4).expect("") - (&m_5 + &m_7).expect("")).expect("");
-            let mut c_12: NmlMatrix = (&m_3 + &m_5).expect("");
-            let mut c_21: NmlMatrix = (&m_2 + &m_4).expect("");
-            let mut c_22: NmlMatrix = ((&m_1 - &m_2).expect("") + (m_3 + m_6).expect("")).expect("");
+            //Add the intermediate matrices to get the sub-matrices of the result c
+            let c_11: NmlMatrix = ((&m_1 + &m_4).expect("") - (&m_5 + &m_7).expect("")).expect("");
+            let c_12: NmlMatrix = (&m_3 + &m_5).expect("");
+            let c_21: NmlMatrix = (&m_2 + &m_4).expect("");
+            let c_22: NmlMatrix = ((&m_1 - &m_2).expect("") + (m_3 + m_6).expect("")).expect("");
+            //reconstitute the sub-matrices from c into c
             let mut data: Vec<f64> = Vec::new();
             data.append(&mut c_11.data[0usize..(dimensions / 2) as usize].to_vec());
             data.append(&mut c_12.data[0usize..(dimensions / 2) as usize].to_vec());
@@ -429,6 +446,62 @@ impl NmlMatrix {
                 is_square: true,
             }
         }
+    }
+    ///The purpose of this function is to prepare the matrices to be used in the strassen algorithm. This means they need to become square, where the dimension is a power of 2.
+    ///The pre_strassen function assumes that matrix_1 and matrix_2 are such, that there exists a matrix C = matrix_1 * matrix_2. Therefore it does not again check if matrix_1.num_rows == matrix_2.num_cols
+    fn pre_strassen(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> (NmlMatrix, NmlMatrix) {
+        let mut biggest_dimension: u32 = matrix_1.num_rows;
+        if (matrix_1.num_cols > biggest_dimension) && (matrix_1.num_cols > matrix_2.num_rows) {
+            biggest_dimension = matrix_1.num_cols;
+        }
+        else if matrix_2.num_rows > biggest_dimension {
+            biggest_dimension = matrix_2.num_rows;
+        }
+
+        if biggest_dimension%2 == 1 {
+            biggest_dimension+=1;
+        }
+
+        return if matrix_1.is_square && matrix_2.is_square && matrix_1.num_rows == biggest_dimension {
+            (NmlMatrix::nml_mat_cp(matrix_1), NmlMatrix::nml_mat_cp(matrix_2))
+        } else {
+            (NmlMatrix::nml_mat_cp(matrix_1).pad(biggest_dimension), NmlMatrix::nml_mat_cp(matrix_2).pad(biggest_dimension))
+        }
+    }
+
+    pub fn pad(self: &Self, dimension: u32) -> Self {
+        if self.is_square {
+            //Find the difference between dimension and the size of self. Add as many rows and columns of zeros.
+            let difference: u32 = dimension - self.num_cols;
+            if difference == 0 {
+                return NmlMatrix::nml_mat_cp(self)
+            }
+            let mut data: Vec<f64> = self.data.clone();
+            for i in 0..difference {
+
+            }
+            Self {
+                num_rows: dimension,,
+                num_cols
+                num_cols: dimension,
+                data,
+                is_square: true
+            }
+        }
+        else {
+            //Add rows and columns of 0 so that Self is square with a size of dimension
+            let mut data: Vec<f64> = Vec::new();
+            Self {
+                num_rows: dimension,
+                num_cols: dimension,
+                data,
+                is_square: true
+            }
+        }
+    }
+
+    pub fn reduce(self: &mut Self) -> Self{
+
     }
 }
 impl Sub for NmlMatrix{
@@ -544,19 +617,11 @@ impl Mul for NmlMatrix {
     type Output = Self;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        return Self::strassen_algorithm(&self, &rhs);
+        let matricies: (NmlMatrix, NmlMatrix) = NmlMatrix::pre_strassen(&self, &rhs);
+        let result: NmlMatrix = NmlMatrix::strassen_algorithm(&matricies.0, &matricies.1);
+        return result.reduce();
 
-        /*
-        divide and conquer with strassens algorithm
-        1. Check if the matrices are square (nxn) and a if n is a power of 2
-        2. if not, add rows and columns with zeros to the matrix until it is
-        Steps 1 and 2 will be computed here, strassens algorithm will be its own method
-        3. Check if n <= 2 if yes, calculate the product
-            2.1 calculate the 7 products
-            2.2 calculate the 4 sums
-        3. if n > 2 divide the matrix into 4 submatrices call the Method recursively
-        4. return the matrix
-        */
+
     }
 }
 
