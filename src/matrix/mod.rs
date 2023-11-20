@@ -468,7 +468,7 @@ impl NmlMatrix {
             (NmlMatrix::nml_mat_cp(matrix_1).pad(biggest_dimension), NmlMatrix::nml_mat_cp(matrix_2).pad(biggest_dimension))
         }
     }
-
+ 
     pub fn pad(self: &Self, dimension: u32) -> Self {
         if self.is_square {
             //Find the difference between dimension and the size of self. Add as many rows and columns of zeros.
@@ -478,11 +478,12 @@ impl NmlMatrix {
             }
             let mut data: Vec<f64> = self.data.clone();
             for i in 0..difference {
-
+                for j in 0..self.num_cols {
+                    data.insert(((self.num_rows + i) * dimension + j) as usize, 0.0);
+                }
             }
             Self {
-                num_rows: dimension,,
-                num_cols
+                num_rows: dimension,
                 num_cols: dimension,
                 data,
                 is_square: true
