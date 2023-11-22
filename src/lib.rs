@@ -273,4 +273,11 @@ mod tests {
         assert_eq!(matrix_1 == matrix_2, true);
     }
 
+    #[test]
+    pub fn pad() {
+        let matrix_1: NmlMatrix = NmlMatrix::new_with_data(2,2, vec![1.0,0.0,0.0,1.0]).expect("matrix not created");
+        let matrix_1_padded: NmlMatrix = matrix_1.pad(3);
+        let result: NmlMatrix = NmlMatrix::new_with_data(3,3, vec![1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0]).expect("Matrix not created");
+        assert_eq!(matrix_1_padded, result);
+    }
 }

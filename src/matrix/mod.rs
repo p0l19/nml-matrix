@@ -7,6 +7,7 @@ use crate::util::ErrorKind::{CreateMatrix, InvalidCols, InvalidRows};
 
 /// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j])
 /// The Library contains a few methods to create matrices with or without data.
+#[derive(Debug)]
 pub struct NmlMatrix {
     pub num_rows: u32,
     pub num_cols: u32,
@@ -27,7 +28,16 @@ impl NmlMatrix {
     }
 
     pub fn new_with_2d_vec(num_rows: u32, num_cols: u32, data: Vec<Vec<f64>>) -> Result<Self, NmlError> {
-        todo!("Not implemented yet");
+        let rows: u32 = data.len() as u32;
+        let mut cols_match = true;
+        for element in data {
+            if element.len() as usize != num_rows {
+                cols_match = false;
+                break;
+            }
+        }
+        match cols_match && rows {  }
+        
     }
 
     ///Constructor that uses a vector to initialize the matrix. checks if the entered rows and columns fit the vector size
@@ -122,8 +132,8 @@ impl NmlMatrix {
         }
         true
     }
-
-    pub fn get_value(self: &Self, row: i32, col: i32) -> Result<f64, NmlError> {
+    ///Returns the value a specified at A[i,j]
+    pub fn at(self: &Self, row: i32, col: i32) -> Result<f64, NmlError> {
         match row < self.num_rows as i32 && col < self.num_cols as i32 {
             false => Err(NmlError::new(InvalidRows)),
             true => Ok(self.data[(row * self.num_cols as i32 + col) as usize]),
@@ -401,7 +411,7 @@ impl NmlMatrix {
     /// The method expects that only two square matrices of the same size are entered. Where n is a power of 2. Therefore the method is private and should only be called from the mul-trait
     fn strassen_algorithm(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> Self {
         let dimensions: u32 = matrix_1.num_rows;
-        if dimensions <= 2 {
+        if dimensions <= 65 {
             return matrix_1.mul_naive(&matrix_2).expect("Matrix size does not match");
         }
         else {
@@ -479,7 +489,10 @@ impl NmlMatrix {
             let mut data: Vec<f64> = self.data.clone();
             for i in 0..difference {
                 for j in 0..self.num_cols {
-                    data.insert(((self.num_rows + i) * dimension + j) as usize, 0.0);
+                    data.insert(((self.num_rows + i) * self.num_rows + j) as usize, 0.0);
+                }
+                for k in  0..self.num_rows{
+                    data.insert(((self.num_cols + i) * k) as usize,0.0)
                 }
             }
             Self {
@@ -501,9 +514,9 @@ impl NmlMatrix {
         }
     }
 
-    pub fn reduce(self: &mut Self) -> Self{
+    /*pub fn reduce(self: &mut Self) -> Self{
 
-    }
+    }*/
 }
 impl Sub for NmlMatrix{
     type Output = Result<Self, NmlError>;
@@ -620,7 +633,8 @@ impl Mul for NmlMatrix {
     fn mul(self, rhs: Self) -> Self::Output {
         let matricies: (NmlMatrix, NmlMatrix) = NmlMatrix::pre_strassen(&self, &rhs);
         let result: NmlMatrix = NmlMatrix::strassen_algorithm(&matricies.0, &matricies.1);
-        return result.reduce();
+        //return result.reduce();
+        return NmlMatrix::nml_mat_eye(4)
 
 
     }
