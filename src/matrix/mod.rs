@@ -5,7 +5,7 @@ use rand::Rng;
 use crate::util::ErrorKind::{CreateMatrix, InvalidCols, InvalidRows};
 
 
-/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j])
+/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j], where m is the number of columns)
 /// The Library contains a few methods to create matrices with or without data.
 #[derive(Debug)]
 pub struct NmlMatrix {
@@ -26,18 +26,27 @@ impl NmlMatrix {
             is_square: num_rows == num_cols,
         }
     }
-
-    pub fn new_with_2d_vec(num_rows: u32, num_cols: u32, data: Vec<Vec<f64>>) -> Result<Self, NmlError> {
-        let rows: u32 = data.len() as u32;
+    ///use a 2d Vector to initialize the matrix. Each Vector in the 2d Vector is a row and the length of these vectors are the columns
+    pub fn new_with_2d_vec(num_rows: u32, num_cols: u32, data_2d: &mut Vec<Vec<f64>>) -> Result<Self, NmlError> {
+        let rows: u32 = data_2d.len() as u32;
         let mut cols_match = true;
-        for element in data {
-            if element.len() as usize != num_rows {
+        let mut data: Vec<f64> = Vec::with_capacity((num_rows*num_cols) as usize);
+        for element in data_2d {
+            if element.len() as u32 != num_cols {
                 cols_match = false;
                 break;
             }
+            data.append(element);
         }
-        match cols_match && rows {  }
-        
+        match cols_match && rows == num_rows{
+            true => {Ok(Self{
+                num_cols,
+                num_rows,
+                data,
+                is_square: num_rows == num_rows
+            })},
+            false => {Err(NmlError::new(ErrorKind::CreateMatrix))}
+        }
     }
 
     ///Constructor that uses a vector to initialize the matrix. checks if the entered rows and columns fit the vector size
@@ -230,16 +239,9 @@ impl NmlMatrix {
         }
     }
     ///multiplies the matrix in place with a given scalar
-    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) -> Self {
-        let mut data: Vec<f64> = Vec::new();
+    pub fn multiply_matrix_scalar(self: &mut Self, scalar: f64) {
         for i in 0..self.data.len() {
-            data.push(self.data[i] * scalar);
-        }
-        Self {
-            num_rows: self.num_rows,
-            num_cols: self.num_cols,
-            data,
-            is_square: self.is_square,
+            self.data[i] *= scalar;
         }
     }
 

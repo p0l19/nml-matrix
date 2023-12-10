@@ -280,4 +280,12 @@ mod tests {
         let result: NmlMatrix = NmlMatrix::new_with_data(3,3, vec![1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,0.0]).expect("Matrix not created");
         assert_eq!(matrix_1_padded, result);
     }
+
+    #[test]
+    pub fn data_2d() {
+        let mut data: Vec<Vec<f64>> = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        let matrix_1: NmlMatrix = NmlMatrix::new_with_2d_vec(2,2, &mut data).expect("matrix not created");
+        let data_2d: Vec<f64> = vec![1.0, 0.0, 0.0, 1.0];
+        assert_eq!(matrix_1.data, data_2d);
+    }
 }
