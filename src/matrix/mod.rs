@@ -142,10 +142,10 @@ impl NmlMatrix {
         true
     }
     ///Returns the value a specified at A[i,j]
-    pub fn at(self: &Self, row: i32, col: i32) -> Result<f64, NmlError> {
-        match row < self.num_rows as i32 && col < self.num_cols as i32 {
+    pub fn at(self: &Self, row: u32, col: u32) -> Result<f64, NmlError> {
+        match row < self.num_rows as u32 && col < self.num_cols as u32 {
             false => Err(NmlError::new(InvalidRows)),
-            true => Ok(self.data[(row * self.num_cols as i32 + col) as usize]),
+            true => Ok(self.data[(row * self.num_cols as u32 + col) as usize]),
         }
     }
     ///Returns a result with a specified Column of a matrix, which in itself also is a matrix. If the specified matrix is not in the matrix the result will contain an error
@@ -369,9 +369,17 @@ impl NmlMatrix {
             true => {
                 let m: u32 = self.num_rows;
                 let n: u32 = self.num_cols;
+                let p: u32 = other.num_cols;
                 let transpose: NmlMatrix = other.transpose();
                 let mut data: Vec<f64> = Vec::new();
-
+                for i in 0..m {
+                    for j in 0..p {
+                        data.insert((i * p + j) as usize, 0.0);
+                        for k in 0..n {
+                            data[(i*p+j) as usize] += self.data[(i * n + k) as usize] * transpose.data[(p * k + j) as usize];
+                        }
+                    }
+                }
                 Ok(Self{
                     num_rows: self.num_rows,
                     num_cols: other.num_cols,
@@ -409,116 +417,6 @@ impl NmlMatrix {
         }
     }
 
-
-    /// The method expects that only two square matrices of the same size are entered. Where n is a power of 2. Therefore the method is private and should only be called from the mul-trait
-    fn strassen_algorithm(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> Self {
-        let dimensions: u32 = matrix_1.num_rows;
-        if dimensions <= 65 {
-            return matrix_1.mul_naive(&matrix_2).expect("Matrix size does not match");
-        }
-        else {
-            //get the four sub matrices of the original matrix that constitute each quadrant.
-            let a_11: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
-            let a_12: NmlMatrix = matrix_1.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
-            let a_21: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
-            let a_22: NmlMatrix = matrix_1.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
-
-            let b_11: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, 1, dimensions / 2).expect("Submatrix could not be created");
-            let b_12: NmlMatrix = matrix_2.get_sub_mtr(1, dimensions / 2, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
-            let b_21: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, 1, dimensions / 2).expect("Submatrix could not be created");
-            let b_22: NmlMatrix = matrix_2.get_sub_mtr(dimensions / 2, dimensions-1, dimensions / 2, dimensions-1).expect("Submatrix could not be created");
-            //Compute the intermediate matrices m1 - m7. Uses only 7 matrix multipliations
-            let m_1: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_22).expect(""), &(&b_11 + &b_22).expect(""));
-            let m_2: NmlMatrix = Self::strassen_algorithm(&(&a_21 + &a_22).expect(""), &b_11);
-            let m_3: NmlMatrix = Self::strassen_algorithm(&a_11, &(&b_12 - &b_22).expect(""));
-            let m_4: NmlMatrix = Self::strassen_algorithm(&a_22, &(&b_21 - &b_11).expect(""));
-            let m_5: NmlMatrix = Self::strassen_algorithm(&(&a_11 + &a_12).expect(""), &b_22);
-            let m_6: NmlMatrix = Self::strassen_algorithm(&(&a_21 - &a_11).expect(""), &(&b_11 + &b_12).expect(""));
-            let m_7: NmlMatrix = Self::strassen_algorithm(&(&a_12 - &a_22).expect(""), &(&b_21 + &b_22).expect(""));
-            //Add the intermediate matrices to get the sub-matrices of the result c
-            let c_11: NmlMatrix = ((&m_1 + &m_4).expect("") - (&m_5 + &m_7).expect("")).expect("");
-            let c_12: NmlMatrix = (&m_3 + &m_5).expect("");
-            let c_21: NmlMatrix = (&m_2 + &m_4).expect("");
-            let c_22: NmlMatrix = ((&m_1 - &m_2).expect("") + (m_3 + m_6).expect("")).expect("");
-            //reconstitute the sub-matrices from c into c
-            let mut data: Vec<f64> = Vec::new();
-            data.append(&mut c_11.data[0usize..(dimensions / 2) as usize].to_vec());
-            data.append(&mut c_12.data[0usize..(dimensions / 2) as usize].to_vec());
-            data.append(&mut c_11.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
-            data.append(&mut c_12.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
-            data.append(&mut c_21.data[0usize..(dimensions / 2) as usize].to_vec());
-            data.append(&mut c_22.data[0usize..(dimensions / 2) as usize].to_vec());
-            data.append(&mut c_21.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
-            data.append(&mut c_22.data[(dimensions / 2) as usize ..dimensions as usize].to_vec());
-
-            Self {
-                num_rows: dimensions,
-                num_cols: dimensions,
-                data,
-                is_square: true,
-            }
-        }
-    }
-    ///The purpose of this function is to prepare the matrices to be used in the strassen algorithm. This means they need to become square, where the dimension is a power of 2.
-    ///The pre_strassen function assumes that matrix_1 and matrix_2 are such, that there exists a matrix C = matrix_1 * matrix_2. Therefore it does not again check if matrix_1.num_rows == matrix_2.num_cols
-    fn pre_strassen(matrix_1: &NmlMatrix, matrix_2: &NmlMatrix) -> (NmlMatrix, NmlMatrix) {
-        let mut biggest_dimension: u32 = matrix_1.num_rows;
-        if (matrix_1.num_cols > biggest_dimension) && (matrix_1.num_cols > matrix_2.num_rows) {
-            biggest_dimension = matrix_1.num_cols;
-        }
-        else if matrix_2.num_rows > biggest_dimension {
-            biggest_dimension = matrix_2.num_rows;
-        }
-
-        if biggest_dimension%2 == 1 {
-            biggest_dimension+=1;
-        }
-
-        return if matrix_1.is_square && matrix_2.is_square && matrix_1.num_rows == biggest_dimension {
-            (NmlMatrix::nml_mat_cp(matrix_1), NmlMatrix::nml_mat_cp(matrix_2))
-        } else {
-            (NmlMatrix::nml_mat_cp(matrix_1).pad(biggest_dimension), NmlMatrix::nml_mat_cp(matrix_2).pad(biggest_dimension))
-        }
-    }
- 
-    pub fn pad(self: &Self, dimension: u32) -> Self {
-        if self.is_square {
-            //Find the difference between dimension and the size of self. Add as many rows and columns of zeros.
-            let difference: u32 = dimension - self.num_cols;
-            if difference == 0 {
-                return NmlMatrix::nml_mat_cp(self)
-            }
-            let mut data: Vec<f64> = self.data.clone();
-            for i in 0..difference {
-                for j in 0..self.num_cols {
-                    data.insert(((self.num_rows + i) * self.num_rows + j) as usize, 0.0);
-                }
-                for k in  0..self.num_rows{
-                    data.insert(((self.num_cols + i) * k) as usize,0.0)
-                }
-            }
-            Self {
-                num_rows: dimension,
-                num_cols: dimension,
-                data,
-                is_square: true
-            }
-        }
-        else {
-            //Add rows and columns of 0 so that Self is square with a size of dimension
-            let mut data: Vec<f64> = Vec::new();
-            Self {
-                num_rows: dimension,
-                num_cols: dimension,
-                data,
-                is_square: true
-            }
-        }
-    }
-
-    /*pub fn reduce(self: &mut Self) -> Self{
-
-    }*/
 }
 impl Sub for NmlMatrix{
     type Output = Result<Self, NmlError>;
@@ -630,15 +528,10 @@ impl Add for &NmlMatrix {
 }
 
 impl Mul for NmlMatrix {
-    type Output = Self;
+    type Output = Result<NmlMatrix, NmlError>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        let matricies: (NmlMatrix, NmlMatrix) = NmlMatrix::pre_strassen(&self, &rhs);
-        let result: NmlMatrix = NmlMatrix::strassen_algorithm(&matricies.0, &matricies.1);
-        //return result.reduce();
-        return NmlMatrix::nml_mat_eye(4)
-
-
+        return self.mul_transpose(&rhs);
     }
 }
 
