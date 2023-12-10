@@ -635,7 +635,6 @@ impl Mul for NmlMatrix {
     fn mul(self, rhs: Self) -> Self::Output {
         let matricies: (NmlMatrix, NmlMatrix) = NmlMatrix::pre_strassen(&self, &rhs);
         let result: NmlMatrix = NmlMatrix::strassen_algorithm(&matricies.0, &matricies.1);
-        //return result.reduce();
         return NmlMatrix::nml_mat_eye(4)
 
 
