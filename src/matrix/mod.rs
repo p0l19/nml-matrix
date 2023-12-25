@@ -362,7 +362,7 @@ impl NmlMatrix {
             is_square: self.is_square,
         }
     }
-
+    ///The naive matrix multiplication algorihm applied with the transponse of the one matrix
     pub fn mul_transpose(self: &Self, other: &Self) -> Result<Self, NmlError> {
         match self.num_cols == other.num_rows {
             false => Err(NmlError::new(InvalidCols)),
@@ -531,7 +531,7 @@ impl Mul for NmlMatrix {
     type Output = Result<NmlMatrix, NmlError>;
 
     fn mul(self, rhs: Self) -> Self::Output {
-        return self.mul_transpose(&rhs);
+        return self.mul_naive(&rhs);
     }
 }
 
