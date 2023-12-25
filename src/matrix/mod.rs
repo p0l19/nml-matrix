@@ -1,13 +1,13 @@
 use std::fmt::Display;
-use std::ops::Add;
-use std::ptr::eq;
+use std::ops::{Add, Mul, Sub};
 use crate::util::{ErrorKind, NmlError};
 use rand::Rng;
 use crate::util::ErrorKind::{CreateMatrix, InvalidCols, InvalidRows};
 
 
-/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j])
+/// Nml_Matrix represents a matrix with a given number of rows and columns, the Data is stored in a one dimensional array using row-major-ordering (data[i][j] = data_new[i * m +j], where m is the number of columns)
 /// The Library contains a few methods to create matrices with or without data.
+#[derive(Debug)]
 pub struct NmlMatrix {
     pub num_rows: u32,
     pub num_cols: u32,
@@ -16,7 +16,6 @@ pub struct NmlMatrix {
 }
 
 impl NmlMatrix {
-
     ///creates a matrix without data and reserves the capacity for the Data Vector
     pub fn new(num_rows: u32, num_cols: u32) -> Self {
         let data: Vec<f64> = Vec::with_capacity((num_rows * num_cols) as usize);
@@ -27,21 +26,43 @@ impl NmlMatrix {
             is_square: num_rows == num_cols,
         }
     }
+    ///use a 2d Vector to initialize the matrix. Each Vector in the 2d Vector is a row and the length of these vectors are the columns
+    pub fn new_with_2d_vec(num_rows: u32, num_cols: u32, data_2d: &mut Vec<Vec<f64>>) -> Result<Self, NmlError> {
+        let rows: u32 = data_2d.len() as u32;
+        let mut cols_match = true;
+        let mut data: Vec<f64> = Vec::with_capacity((num_rows*num_cols) as usize);
+        for element in data_2d {
+            if element.len() as u32 != num_cols {
+                cols_match = false;
+                break;
+            }
+            data.append(element);
+        }
+        match cols_match && rows == num_rows{
+            true => {Ok(Self{
+                num_cols,
+                num_rows,
+                data,
+                is_square: num_rows == num_rows
+            })},
+            false => {Err(NmlError::new(ErrorKind::CreateMatrix))}
+        }
+    }
 
     ///Constructor that uses a vector to initialize the matrix. checks if the entered rows and columns fit the vector size
     pub fn new_with_data(num_rows: u32, num_cols: u32, data: Vec<f64>) -> Result<Self, NmlError> {
-        match (num_rows * num_cols) as usize == data.len()  {
+        match (num_rows * num_cols) as usize == data.len() {
             false => Err(NmlError::new(ErrorKind::CreateMatrix)),
-            true  => {
+            true => {
                 let is_square = num_rows == num_cols;
                 Ok(NmlMatrix {
                     num_rows,
                     num_cols,
                     data,
                     is_square,
-                })},
+                })
+            },
         }
-
     }
 
     ///Returns a matrix with defined size and random data between minimum and maximum values
@@ -119,6 +140,13 @@ impl NmlMatrix {
             }
         }
         true
+    }
+    ///Returns the value a specified at A[i,j]
+    pub fn at(self: &Self, row: u32, col: u32) -> Result<f64, NmlError> {
+        match row < self.num_rows as u32 && col < self.num_cols as u32 {
+            false => Err(NmlError::new(InvalidRows)),
+            true => Ok(self.data[(row * self.num_cols as u32 + col) as usize]),
+        }
     }
     ///Returns a result with a specified Column of a matrix, which in itself also is a matrix. If the specified matrix is not in the matrix the result will contain an error
     pub fn get_column(self: &Self, column: u32) -> Result<Self, NmlError> {
@@ -199,13 +227,12 @@ impl NmlMatrix {
         }
     }
     ///multiplies a given column with a given scalar in place. If the row-index is not in the matrix the returned Result will contain an error
-    pub fn multiply_col_scalar(self: &mut Self, col: u32, scalar : f64) -> Result<(), NmlError>{
+    pub fn multiply_col_scalar(self: &mut Self, col: u32, scalar: f64) -> Result<(), NmlError> {
         match col < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
                 for i in 0..self.num_rows {
                     self.data[(i * self.num_cols + col) as usize] *= scalar;
-
                 }
                 Ok(())
             }
@@ -219,7 +246,7 @@ impl NmlMatrix {
     }
 
     /// row_1 ist multiplied with scalar_1, this is analog for 2. row_1 will be modified with the solution (row_1 = row_1 * scalar + row_2 * scalar_2)
-    pub fn add_rows(self: &mut Self, row_1: u32, scalar_1: f64, row_2: u32, scalar_2: f64) -> Result<(), NmlError>{
+    pub fn add_rows(self: &mut Self, row_1: u32, scalar_1: f64, row_2: u32, scalar_2: f64) -> Result<(), NmlError> {
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
@@ -232,7 +259,7 @@ impl NmlMatrix {
         }
     }
     ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
-    pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError>{
+    pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError> {
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
@@ -246,14 +273,14 @@ impl NmlMatrix {
         }
     }
     ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
-    pub fn swap_columns(self: &mut Self, col_1: u32, col_2: u32) -> Result<(), NmlError>{
+    pub fn swap_columns(self: &mut Self, col_1: u32, col_2: u32) -> Result<(), NmlError> {
         match col_1 < self.num_cols && col_2 < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
                 for i in 0..self.num_rows {
-                    let temp = self.data[(i*self.num_cols + col_1) as usize];
-                    self.data[(i*self.num_cols + col_1) as usize] = self.data[(i*self.num_cols + col_2) as usize];
-                    self.data[(i*self.num_cols + col_2) as usize] = temp;
+                    let temp = self.data[(i * self.num_cols + col_1) as usize];
+                    self.data[(i * self.num_cols + col_1) as usize] = self.data[(i * self.num_cols + col_2) as usize];
+                    self.data[(i * self.num_cols + col_2) as usize] = temp;
                 }
                 Ok(())
             }
@@ -261,7 +288,7 @@ impl NmlMatrix {
     }
     ///Tries to remove a column of a matrix and returns the rest of the matrix as a now on. Does not move the original matrix.
     ///If the column is not in the original matrix the result will return an error
-    pub fn remove_column(self: &Self, col: u32) -> Result<Self, NmlError>{
+    pub fn remove_column(self: &Self, col: u32) -> Result<Self, NmlError> {
         match col < self.num_cols {
             false => Err(NmlError::new(InvalidCols)),
             true => {
@@ -285,12 +312,12 @@ impl NmlMatrix {
     }
     ///Tries to remove a column of a matrix and returns the rest of the matrix as a now on. Does not move the original matrix.
     ///If the column is not in the original matrix the result will return an error
-    pub fn remove_row(self: &Self, row: u32) -> Result<Self, NmlError>{
+    pub fn remove_row(self: &Self, row: u32) -> Result<Self, NmlError> {
         match row < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
             true => {
-                let data: Vec<f64> = self.data[((row +1) * self.num_cols) as usize ..self.data.len()].to_vec();
-                Ok(Self{
+                let data: Vec<f64> = self.data[((row + 1) * self.num_cols) as usize..self.data.len()].to_vec();
+                Ok(Self {
                     num_cols: self.num_cols,
                     num_rows: 1,
                     data,
@@ -300,6 +327,139 @@ impl NmlMatrix {
         }
     }
 
+    pub fn get_sub_mtr(self: &Self, row_start: u32, row_end: u32, col_start: u32, col_end: u32) -> Result<Self, NmlError> {
+        match row_start < self.num_rows && row_end < self.num_rows && col_start < self.num_cols && col_end < self.num_cols {
+            false => Err(NmlError::new(InvalidRows)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in row_start - 1..row_end {
+                    for j in col_start - 1..col_end {
+                        data.push(self.data[(i * self.num_cols + j) as usize]);
+                    }
+                }
+                Ok(Self {
+                    num_rows: row_end - row_start,
+                    num_cols: col_end - col_start,
+                    data,
+                    is_square: false,
+                })
+            }
+        }
+    }
+
+    ///Computes the transpose matrix b' of a matrix b. This is achieved by going from row-major-ordering to a more efficient storage. The input matrix will not be modified or moved.
+    pub fn transpose(self: &Self) -> Self{
+        let mut data: Vec<f64> = Vec::with_capacity(self.data.len());
+        for i in 0..self.num_cols {
+            for j in 0..self.num_rows {
+                data.push(self.data[(i + j*self.num_cols) as usize]);
+            }
+        }
+        Self {
+            num_rows: self.num_cols,
+            num_cols: self.num_rows,
+            data,
+            is_square: self.is_square,
+        }
+    }
+    ///The naive matrix multiplication algorihm applied with the transponse of the one matrix
+    pub fn mul_transpose(self: &Self, other: &Self) -> Result<Self, NmlError> {
+        match self.num_cols == other.num_rows {
+            false => Err(NmlError::new(InvalidCols)),
+            true => {
+                let m: u32 = self.num_rows;
+                let n: u32 = self.num_cols;
+                let p: u32 = other.num_cols;
+                let transpose: NmlMatrix = other.transpose();
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..m {
+                    for j in 0..p {
+                        data.insert((i * p + j) as usize, 0.0);
+                        for k in 0..n {
+                            data[(i*p+j) as usize] += self.data[(i * n + k) as usize] * transpose.data[(p * k + j) as usize];
+                        }
+                    }
+                }
+                Ok(Self{
+                    num_rows: self.num_rows,
+                    num_cols: other.num_cols,
+                    data,
+                    is_square: self.num_rows == other.num_cols
+                })
+            }
+        }
+    }
+    ///The naive matrix multiplication algorithm. It iterates trough all values of both matrices. These matrices are not moved or modified
+    pub fn mul_naive(self: &Self, other: &Self) -> Result<Self,NmlError> {
+        let m = self.num_rows;
+        let n_1 = self.num_cols;
+        let n_2 = other.num_rows;
+        let p = other.num_cols;
+        match n_1 == n_2 {
+            false => {Err(NmlError::new(CreateMatrix))},
+            true => {
+                let mut data = Vec::with_capacity((m*p) as usize);
+                for i in 0..m {
+                    for j in 0..p {
+                        data.insert((i * p + j) as usize, 0.0);
+                        for k in 0..n_1 {
+                            data[(i*p+j) as usize] += self.data[(i * n_1 + k) as usize] * other.data[(p * k + j) as usize];
+                        }
+                    }
+                }
+                Ok(Self{
+                    num_rows: m,
+                    num_cols: p,
+                    data,
+                    is_square: m == p,
+                })
+            }
+        }
+    }
+
+}
+impl Sub for NmlMatrix{
+    type Output = Result<Self, NmlError>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols {
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() -1 {
+                    data.push(self.data[i] - rhs.data[i]);
+                }
+                Ok(Self{
+                    num_rows: self.num_rows,
+                    num_cols: self.num_cols,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
+}
+
+impl Sub for &NmlMatrix {
+    type Output = Result<NmlMatrix, NmlError>;
+
+    fn sub(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols {
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() -1 {
+                    data.push(self.data[i] - rhs.data[i]);
+                }
+                Ok(NmlMatrix{
+                    num_rows: self.num_rows,
+                    num_cols: self.num_cols,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
 }
 
 impl Display for NmlMatrix {
@@ -327,12 +487,12 @@ impl Add for NmlMatrix {
     type Output = Result<Self, NmlError>;
 
     fn add(self, rhs: Self) -> Self::Output {
-        match self.data.len() == rhs.data.len() && self.num_cols == rhs.num_cols{
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols{
             false => Err(NmlError::new(CreateMatrix)),
             true => {
                 let mut data: Vec<f64> = Vec::new();
                 for i in 0..self.data.len() {
-                    data.insert(i, self.data[i] + rhs.data[i]);
+                    data.push(self.data[i] + rhs.data[i]);
                 }
                 Ok(Self{
                     num_cols: self.num_cols,
@@ -344,3 +504,34 @@ impl Add for NmlMatrix {
         }
     }
 }
+
+impl Add for &NmlMatrix {
+    type Output = Result<NmlMatrix, NmlError>;
+
+    fn add(self, rhs: Self) -> Self::Output {
+        match self.num_rows == rhs.num_rows && self.num_cols == rhs.num_cols{
+            false => Err(NmlError::new(CreateMatrix)),
+            true => {
+                let mut data: Vec<f64> = Vec::new();
+                for i in 0..self.data.len() {
+                    data.push(self.data[i] + rhs.data[i]);
+                }
+                Ok(NmlMatrix{
+                    num_cols: self.num_cols,
+                    num_rows: self.num_rows,
+                    data,
+                    is_square: self.is_square
+                })
+            }
+        }
+    }
+}
+
+impl Mul for NmlMatrix {
+    type Output = Result<NmlMatrix, NmlError>;
+
+    fn mul(self, rhs: Self) -> Self::Output {
+        return self.mul_naive(&rhs);
+    }
+}
+

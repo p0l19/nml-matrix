@@ -247,13 +247,39 @@ mod tests {
     }
 
     #[test]
-    pub fn mul_matrix() {
-        let data: Vec<f64> = vec![1_f64,2_f64,3_f64, 4_f64];
-        let matrix_1 = NmlMatrix::new_with_data(2, 2, data).expect("Unable to create matrix");
-        let matrix_2 = NmlMatrix::nml_mat_eye(2);
-        let matrix_3 = NmlMatrix::nml_mat_cp(&matrix_1);
-        let result = matrix_1.matrix_mul(&matrix_2).expect("Unable to multiply matrices");
-        println!("{}", result);
-        assert_eq!(result == matrix_3, true);
+    pub fn mul_naive() {
+        let data_1: Vec<f64> = vec![1.0, 0.0, 0.0, 1.0];
+        let data_2: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+        let matrix_1 = NmlMatrix::new_with_data(2,2, data_1).expect("");
+        let matrix_2 = NmlMatrix::new_with_data(2,2, data_2).expect("");
+        let result = matrix_2.mul_naive(&matrix_1).expect("");
+        let expect = NmlMatrix::nml_mat_cp(&matrix_2);
+        assert_eq!(result == expect, true);
+    }
+
+    #[test]
+    pub fn mul_transpose() {
+        let data_1: Vec<f64> = vec![1.0, 0.0, 0.0, 1.0];
+        let data_2: Vec<f64> = vec![1.0, 2.0, 3.0, 4.0];
+        let matrix_1 = NmlMatrix::new_with_data(2,2, data_1).expect("");
+        let matrix_2 = NmlMatrix::new_with_data(2,2, data_2).expect("");
+        let result = matrix_2.mul_transpose(&matrix_1).expect("");
+        let expect = NmlMatrix::nml_mat_cp(&matrix_2);
+        assert_eq!(result == expect, true);
+    }
+
+    #[test]
+    pub fn transpose() {
+        let matrix_1: NmlMatrix = NmlMatrix::new_with_data(3,3, vec![1.0,0.0,0.0,0.0,1.0,0.0,0.0,0.0,1.0]).expect("matrix not created");
+        let matrix_2: NmlMatrix = matrix_1.transpose();
+        assert_eq!(matrix_1 == matrix_2, true);
+    }
+
+    #[test]
+    pub fn data_2d() {
+        let mut data: Vec<Vec<f64>> = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        let matrix_1: NmlMatrix = NmlMatrix::new_with_2d_vec(2,2, &mut data).expect("matrix not created");
+        let data_2d: Vec<f64> = vec![1.0, 0.0, 0.0, 1.0];
+        assert_eq!(matrix_1.data, data_2d);
     }
 }
