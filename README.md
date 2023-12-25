@@ -12,7 +12,7 @@ You can also find the Library on [Crates.io](https://crates.io/crates/nml-matrix
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-nml-matrix = "0.1.0"
+nml-matrix = "0.2.1"
 ```
 
 ## Example
@@ -22,7 +22,7 @@ use nml_matrix::NmlMatrix;
 fn main() {
     let a = NmlMatrix::new_with_data(3, 2, vec![1, 2, 3, 4, 5, 6]);
     let b = NmlMatrix::new_with_data(3, 2, vec![1, 2, 3, 4, 5, 6]);
-    let c = a + b;
+    let c = a * b;
     println!("{:?}", c);
 }
 ```
