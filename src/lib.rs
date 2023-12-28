@@ -5,7 +5,6 @@ use crate::matrix::NmlMatrix;
 ///unit tests for the Methods and Constructors of the NmlMatrix struct
 #[cfg(test)]
 mod tests {
-    use std::result;
 
     use super::*;
 

@@ -26,7 +26,13 @@ fn main() {
     println!("{:?}", c);
 }
 ```
+## Used libraries
+```
+[dependencies]
+num-traits = "0.2.17"
+rand = "0.8.5"
 
+``` 
 ## Documentation
 You can find the documentation [here](https://docs.rs/nml-matrix/0.1.0/nml_matrix/struct.NmlMatrix.html)
 
