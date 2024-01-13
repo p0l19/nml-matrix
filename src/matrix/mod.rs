@@ -260,7 +260,7 @@ impl<T> NmlMatrix<T> where T: Num + Copy + Default + Signed + PartialOrd + MulAs
             }
         }
     }
-    ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix
+    ///Method that swaps two given rows of a matrix object in place. Returns either nothing or an NmlError if the specified rows are not in the matrix. The row-numbers in matrices starts with 0
     pub fn swap_rows(self: &mut Self, row_1: u32, row_2: u32) -> Result<(), NmlError> {
         match row_1 < self.num_rows && row_2 < self.num_rows {
             false => Err(NmlError::new(InvalidRows)),
@@ -417,6 +417,38 @@ impl<T> NmlMatrix<T> where T: Num + Copy + Default + Signed + PartialOrd + MulAs
                 })
             }
         }
+    }
+
+    /// returns a matrix which is the given matrix in row echelon form. The input matrix is not moved or modified in the process
+    pub fn row_echelon_form(self: &Self) -> Self {
+        let mut copy_of_self: NmlMatrix<T> = NmlMatrix::nml_mat_cp(self);
+        //pivot are the coordinates of the pivot element (row, column, value)
+        for index in 0..self.num_rows {
+            let mut pivot: (u32,u32,T) = (0, 0, T::default());
+            //find the pivot element
+            'columns: for i in 0..copy_of_self.num_cols {
+                for j in index+1..copy_of_self.num_rows {
+                    if self.at(j, i).expect("unsafe") != T::default() {
+                        pivot = (j, i, self.at(j, i).expect("unsafe"));
+                        break 'columns;
+                    }
+                }
+            }
+            if pivot != (0, 0, T::default()) {
+                //move the row of the pivot element to the top
+                copy_of_self.swap_rows(0, pivot.0).expect("unsafe");
+                pivot.0 = index;
+                copy_of_self.multiply_row_scalar(1, T::one() / pivot.2).expect("unsafe");
+
+                //add the pivot row to all "lower" rows to set the column of the pivot element to zero
+                for i in index + 1..self.num_rows {
+                    let how_often = pivot.2 / self.at(i, pivot.1).expect("unsafe");
+                    copy_of_self.add_rows(i, T::one(), pivot.0, how_often).expect("unsafe");
+                }
+            }
+        }
+        //return the modified copy of the given matrix
+        copy_of_self
     }
 
 }
