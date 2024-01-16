@@ -281,4 +281,5 @@ mod tests {
         let data_2d: Box<[f64]> = vec![1.0, 0.0, 0.0, 1.0].into_boxed_slice();
         assert_eq!(matrix_1.data, data_2d);
     }
+
 }
