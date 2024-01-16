@@ -4,15 +4,11 @@
 This library is a personal project of mine to learn more about linear algebra and get more into rust-programming.
 You can also find the Library on [Crates.io](https://crates.io/crates/nml-matrix) and add it to your projects with the cargo package manager.
 
-//write a good readme for the Library which includes the link to docs.rs the Struct of the Matrix is called NmlMatrix
-
-//write a good readme for the Library which includes the link to docs.rs the Struct of the Matrix is called NmlMatrix
-
 ## Usage
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-nml-matrix = "0.2.1"
+nml-matrix = "0.4.1"
 ```
 
 ## Example
