@@ -419,6 +419,22 @@ impl<T> NmlMatrix<T> where T: Num + Copy + Default + Signed + PartialOrd + MulAs
         }
     }
 
+    pub fn evcxr_display(&self) {
+        let mut html = String::new();
+        html.push_str("<table>");
+        for i in 0..self.num_rows {
+            html.push_str("<tr>");
+            for j in 0..self.num_cols {
+                html.push_str("<td>");
+                html.push_str(&self.data[(i * self.num_cols + j) as usize].to_string());
+                html.push_str("</td>");
+            }
+            html.push_str("</tr>");
+        }
+        html.push_str("</table>");
+        println!("EVCXR_BEGIN_CONTENT text/html\n{}\nEVCXR_END_CONTENT", html);
+    }
+
 }
 impl<T> Sub for NmlMatrix<T> where T: Num + Copy + Default + Signed + PartialOrd + MulAssign + AddAssign {
     type Output = Result<Self, NmlError>;
